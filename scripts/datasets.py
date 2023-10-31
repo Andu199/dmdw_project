@@ -1,5 +1,3 @@
-import os.path
-
 import pandas as pd
 
 
@@ -41,36 +39,40 @@ class MarketDataset(DatasetBase):
         self._clean_dataframe()
 
     def _clean_dataframe(self):
-        pass
+        self._dataset.dropna(inplace=True)
 
 
-class AutomobileDataset(DatasetBase):
-    # Maybe get annotations for this dataset for metric evaluation
-    def __init__(self, datasets_root_path, use_train, use_test):
+class CustomerDataset(DatasetBase):
+    def __init__(self, dataset_path):
         super().__init__()
-        if not (use_train or use_test):
-            raise ValueError("use_train and use_test arguments cannot be both False in the same time!")
-
-        if use_train:
-            df_train = pd.read_csv(os.path.join(datasets_root_path, "Train.csv"))\
-                .drop(columns=["ID", "Var_1", "Segmentation"])
-        else:
-            df_train = pd.DataFrame()
-        if use_test:
-            df_test = pd.read_csv(os.path.join(datasets_root_path, "Test.csv")).drop(columns=["ID", "Var_1"])
-        else:
-            df_test = pd.DataFrame()
-
-        df = pd.concat([df_train, df_test], ignore_index=True)
+        df = pd.read_csv(dataset_path).drop(columns=["CustomerID"])
         self._dataset = df
         self._clean_dataframe()
 
     def _clean_dataframe(self):
-        pass
+        # Remove rows with null values
+        self._dataset.dropna(inplace=True)
+
+        # Remove rows with weird values
+        unwanted_rows = []
+        for idx in self._dataset.index:
+            if self._dataset['Gender'][idx] not in ['Male', 'Female']:
+                unwanted_rows.append(idx)
+            elif self._dataset['Age'][idx] < 18:
+                unwanted_rows.append(idx)
+            elif self._dataset['Spending Score (1-100)'][idx] < 1 or self._dataset['Spending Score (1-100)'][idx] > 100:
+                unwanted_rows.append(idx)
+            elif self._dataset['Work Experience'][idx] < 0:
+                unwanted_rows.append(idx)
+            elif self._dataset['Family Size'][idx] <= 0:
+                unwanted_rows.append(idx)
+
+        self._dataset.drop(unwanted_rows, inplace=True)
+        self._dataset.reset_index(inplace=True)
 
 
 if __name__ == '__main__':
-    md = AutomobileDataset(r"C:\Important Stuff\Facultate\Anul V\DM\Proiect\dmdw_project\data\\", use_train=True, use_test=True)
+    md = MarketDataset(r"C:\Important Stuff\Facultate\Anul V\DM\Proiect\dmdw_project\data\marketing_campaign.csv")
     print(md.get_numpy())
     print(md.get_pandas())
     print(len(md))
