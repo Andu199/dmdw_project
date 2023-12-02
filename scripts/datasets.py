@@ -1,5 +1,8 @@
 import numpy as np
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
+
+DATASETS_LIST = {"MarketDataset": "../data/marketing_campaign.csv", "CustomerDataset": "../data/Customers.csv"}
 
 
 class DatasetBase:
@@ -31,16 +34,35 @@ class DatasetBase:
             raise ValueError("Initialize the dataset with a pandas DataFrame!")
         print(self._dataset.iloc[start:end, :].to_markdown())
 
+    def _scale_data(self):
+        scaler = StandardScaler()
+        scaler.fit(self._dataset)
+        self._dataset = pd.DataFrame(scaler.transform(self._dataset), columns=self._dataset.columns)
+
+    def dimensionality_reduction(self, corr_thr):
+        correlation_matrix = self._dataset.corr()
+
+        corr_column_names = []
+        for i in range(len(correlation_matrix.columns)):
+            for j in range(i):
+                if abs(correlation_matrix.iloc[i, j]) > corr_thr:
+                    corr_column_names.append(correlation_matrix.columns[i])
+
+        self._dataset.drop(list(set(corr_column_names)), axis="columns", inplace=True)
+
 
 class MarketDataset(DatasetBase):
     def __init__(self, dataset_path):
         super().__init__()
         self.EDUCATION_TO_INT = {"Basic": 0, "2n Cycle": 1, "Graduation": 2, "Master": 3, "PhD": 4}
         self.INT_TO_EDUCATION = {0: "Basic", 1: "2n Cycle", 2: "Graduation", 3: "Master", 4: "PhD"}
+        self.unwanted_columns = ["Marital_Status", "AcceptedCmp3", "AcceptedCmp4", "AcceptedCmp5", "AcceptedCmp1",
+                                 "AcceptedCmp2", "Complain", "Z_CostContact", "Z_Revenue", "Response"]
 
         df = pd.read_csv(dataset_path, sep='\t').drop(columns=["ID"])
         self._dataset = df
         self._clean_dataframe()
+        self._scale_data()
 
     def _clean_dataframe(self):
         # Remove rows with null values
@@ -74,6 +96,8 @@ class MarketDataset(DatasetBase):
 
         # Merge Kidhome + Teenhome
         self._dataset["Children"] = self._dataset["Kidhome"] + self._dataset["Teenhome"]
+        self._dataset.drop("Kidhome", axis="columns", inplace=True)
+        self._dataset.drop("Teenhome", axis="columns", inplace=True)
 
         # Total Spending
         self._dataset["Total_Spending"] = self._dataset["MntWines"] + \
@@ -83,6 +107,8 @@ class MarketDataset(DatasetBase):
                                           self._dataset["MntSweetProducts"] + \
                                           self._dataset["MntGoldProds"]
 
+        self._dataset.drop(self.unwanted_columns, axis="columns", inplace=True)
+
 
 class CustomerDataset(DatasetBase):
     def __init__(self, dataset_path):
@@ -90,6 +116,7 @@ class CustomerDataset(DatasetBase):
         df = pd.read_csv(dataset_path).drop(columns=["CustomerID"])
         self._dataset = df
         self._clean_dataframe()
+        self._scale_data()
 
     def _clean_dataframe(self):
         # Remove rows with null values
@@ -110,4 +137,13 @@ class CustomerDataset(DatasetBase):
                 unwanted_rows.append(idx)
 
         self._dataset.drop(unwanted_rows, inplace=True)
-        self._dataset.reset_index(inplace=True)
+        self._dataset.reset_index(drop=True, inplace=True)
+
+        self._dataset.drop("Profession", axis="columns", inplace=True)
+        self._dataset["Gender"] = self._dataset["Gender"].replace({"Male": 0, "Female": 1})
+
+
+def get_dataset_object(dataset_class_name, dataset_path):
+    if dataset_class_name == "MarketDataset":
+        return MarketDataset(dataset_path)
+    return CustomerDataset(dataset_path)
