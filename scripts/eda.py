@@ -10,6 +10,8 @@ def main_eda():
         correlation_matrix = dataset.get_pandas().corr()
         sns.heatmap(correlation_matrix)
         plt.title(f"{dataset_name} Correlation Matrix")
+        plt.tight_layout()
+        plt.xticks(rotation=45)
         plt.savefig(f"../outputs/{dataset_name}_correlation_matrix.jpg")
         plt.clf()
 
@@ -18,6 +20,8 @@ def main_eda():
     correlation_matrix = dataset.get_pandas().corr()
     sns.heatmap(correlation_matrix)
     plt.title("MarketDataset Correlation Matrix (after reducing dimensionality)")
+    plt.tight_layout()
+    plt.xticks(rotation=45)
     plt.savefig("../outputs/MarketDataset_correlation_matrix_reduced.jpg")
     plt.clf()
 
