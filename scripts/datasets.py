@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 DATASETS_LIST = {"MarketDataset": "../data/marketing_campaign.csv", "CustomerDataset": "../data/Customers.csv"}
@@ -39,16 +40,9 @@ class DatasetBase:
         scaler.fit(self._dataset)
         self._dataset = pd.DataFrame(scaler.transform(self._dataset), columns=self._dataset.columns)
 
-    def dimensionality_reduction(self, corr_thr):
-        correlation_matrix = self._dataset.corr()
-
-        corr_column_names = []
-        for i in range(len(correlation_matrix.columns)):
-            for j in range(i):
-                if abs(correlation_matrix.iloc[i, j]) > corr_thr:
-                    corr_column_names.append(correlation_matrix.columns[i])
-
-        self._dataset.drop(list(set(corr_column_names)), axis="columns", inplace=True)
+    def dimensionality_reduction(self, n_components):
+        pca = PCA(n_components=n_components)
+        self._dataset = pd.DataFrame(pca.fit_transform(self._dataset))
 
 
 class MarketDataset(DatasetBase):
