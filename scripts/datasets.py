@@ -45,6 +45,7 @@ class DatasetBase:
         self._dataset = pd.DataFrame(pca.fit_transform(self._dataset))
 
 
+# Customer Personality Analysis
 class MarketDataset(DatasetBase):
     def __init__(self, dataset_path):
         super().__init__()
@@ -104,6 +105,7 @@ class MarketDataset(DatasetBase):
         self._dataset.drop(self.unwanted_columns, axis="columns", inplace=True)
 
 
+# Shop Customer Data
 class CustomerDataset(DatasetBase):
     def __init__(self, dataset_path):
         super().__init__()

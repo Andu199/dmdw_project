@@ -117,15 +117,20 @@ def main_run(run_type):
             best_params, best_score = hyperparam_finetune(dataset)
 
             evaluate_and_visualize_best_result(best_params, dataset, dataset_name)
-    else:
-        for dataset_name, path in DATASETS_LIST.items():
-            dataset = get_dataset_object(dataset_name, path)
+    elif run_type == "RUN":
+        dataset = get_dataset_object("MarketDataset", "../data/marketing_campaign.csv")
+        evaluate_and_visualize_best_result({
+            'n_components': 3,
+            'optics': {"min_samples": 15, "metric": "cosine", "xi": 0.1}}, dataset, "MarketDataset")
 
-            evaluate_and_visualize_best_result({
-                'n_components': 3,
-                'optics': {"min_samples": 15, "metric": "cosine", "xi": 0.1}}, dataset, dataset_name)
+        dataset = get_dataset_object("CustomerDataset", "../data/Customers.csv")
+        evaluate_and_visualize_best_result({
+            'n_components': 5,
+            'optics': {"min_samples": 7, "metric": "cosine", "xi": 0.1}}, dataset, "CustomerDataset")
+    else:
+        raise ValueError(f"Unknown run type! (Expected: FINE_TUNE or RUN; Got: {run_type})")
 
 
 if __name__ == '__main__':
     np.random.seed(424242)
-    main_run("FINE_TUNE")
+    main_run("RUN")
